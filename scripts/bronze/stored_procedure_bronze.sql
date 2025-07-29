@@ -14,6 +14,9 @@ SCRIPT PURPOSE
 Warning:
 	make sure to check any data exists in the table 
 	this scrip truncates all data and load new data from source
+
+TO USE:
+	EXEC SCHMEA.NAME (EXEC bronze.load_bronze)
 */
 
 CREATE OR ALTER PROCEDURE bronze.load_bronze as
