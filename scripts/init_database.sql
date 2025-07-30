@@ -19,6 +19,7 @@ GO
 -- go is a command that signals the end of the batch of T-SQL statement
 
 --Drop and recreate database "datawarehouse" if exists
+--If a database named DataWarehouse exists, then force it into single-user mode, kick out everyone, and delete it immediately.
 IF EXISTS (SELECT 1 FROM  sys.databases WHERE name = 'DataWarehouse')
 Begin 
   ALTER DATABASE DataWarehouse SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
