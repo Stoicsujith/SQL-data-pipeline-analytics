@@ -38,7 +38,7 @@ BEGIN TRY
 		PRINT '>> TRUNCATING TABLE: bronze.crm_sales_details';
 		TRUNCATE TABLE bronze.crm_sales_details;
 
-		PRINT '>> INSERTING DATE INTO: bronze.crm_sales_details';
+		PRINT '>> INSERTING DATA INTO: bronze.crm_sales_details';
 		BULK INSERT bronze.crm_sales_details
 		FROM 'Enter/file/path'
 		WITH(
