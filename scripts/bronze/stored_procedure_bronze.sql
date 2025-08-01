@@ -54,7 +54,7 @@ BEGIN TRY
 		PRINT '>> TRUNCATING TABLE: bronze.crm_sales_details';
 
 		TRUNCATE TABLE bronze.crm_cust_info;
-		PRINT '>> INSERTING DATE INTO: bronze.crm_sales_details';
+		PRINT '>> INSERTING DATA INTO: bronze.crm_sales_details';
 		BULK INSERT bronze.crm_cust_info
 		FROM 'Enter/file/path'
 		WITH(
@@ -70,7 +70,7 @@ BEGIN TRY
 		PRINT '>> TRUNCATING TABLE: bronze.crm_sales_details';
 
 		TRUNCATE TABLE bronze.crm_prd_info;
-		PRINT '>> INSERTING DATE INTO: bronze.crm_sales_details';
+		PRINT '>> INSERTING DATA INTO: bronze.crm_sales_details';
 		BULK INSERT bronze.crm_prd_info
 		FROM 'Enter/file/path'
 		WITH(
@@ -90,7 +90,7 @@ BEGIN TRY
 		PRINT '>> TRUNCATING TABLE: bronze.crm_sales_details';
 
 		TRUNCATE TABLE bronze.erp_cust_az12;
-		PRINT '>> INSERTING DATE INTO: bronze.crm_sales_details';
+		PRINT '>> INSERTING DATA INTO: bronze.crm_sales_details';
 		BULK INSERT bronze.erp_cust_az12
 		FROM 'Enter/file/path'
 		WITH(
@@ -106,7 +106,7 @@ BEGIN TRY
 		PRINT '>> TRUNCATING TABLE: bronze.crm_sales_details';
 
 		TRUNCATE TABLE bronze.erp_loc_a101;
-		PRINT '>> INSERTING DATE INTO: bronze.crm_sales_details';
+		PRINT '>> INSERTING DATA INTO: bronze.crm_sales_details';
 		BULK INSERT bronze.erp_loc_a101
 		FROM 'Enter/file/path'
 		WITH(
@@ -122,7 +122,7 @@ BEGIN TRY
 		PRINT '>> TRUNCATING TABLE: bronze.crm_sales_details';
 
 		TRUNCATE TABLE bronze.erp_px_cat_g1v2;
-		PRINT '>> INSERTING DATE INTO: bronze.crm_sales_details';
+		PRINT '>> INSERTING DATA INTO: bronze.crm_sales_details';
 		BULK INSERT bronze.erp_px_cat_g1v2
 		FROM 'Enter/file/path'
 		WITH(
