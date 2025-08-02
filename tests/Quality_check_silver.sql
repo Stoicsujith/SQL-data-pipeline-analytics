@@ -84,11 +84,12 @@ WHERE prd_end_dt < prd_start_dt;
 -- ====================================================================
 -- Check for Invalid Dates
 -- Expectation: No Invalid Dates
+
 SELECT 
     NULLIF(sls_due_dt, 0) AS sls_due_dt 
 FROM bronze.crm_sales_details
 WHERE sls_due_dt <= 0 
-    OR LEN(sls_due_dt) != 8 
+    OR LEN(sls_due_dt) != 8  -- if sls_due_dt is in date leave this check, this check supports only int 
     OR sls_due_dt > 20500101 
     OR sls_due_dt < 19000101;
 
