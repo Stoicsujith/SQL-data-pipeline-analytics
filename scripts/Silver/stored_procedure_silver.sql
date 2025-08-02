@@ -1,0 +1,244 @@
+/*
+==================================
+STORED PROCEDURE FOR SILVER LAYER
+==================================
+
+SCRIPT PURPOSE
+	This stored procedure performs ETL (EXTRACT, TRANSFORM, LOAD) and 
+	populates it to silver layer from bronze layer
+
+Warning:
+	make sure to check any data exists in the table 
+	this scrip truncates all data in silver layer and load new data from bronze layer
+
+TO USE:
+	EXEC SCHMEA.NAME (EXEC silver.load_silver)
+*/
+USE datawarehouse;
+GO
+
+CREATE OR ALTER PROCEDURE silver.load_silver AS 
+BEGIN
+	DECLARE @START_TIME DATETIME, @END_TIME DATETIME, @BATCH_START_TIME DATETIME, @BATCH_END_TIME DATETIME;
+	BEGIN TRY
+		SET @BATCH_START_TIME = GETDATE();
+		PRINT'===================================';
+		PRINT'SILVER LAYER EXECUTION STARTED';
+		PRINT'===================================';
+
+
+		PRINT'----------------------------------';
+		PRINT'LOADING CRM FILES';
+		PRINT'----------------------------------';
+		SET @START_TIME = GETDATE();
+		PRINT'>> TRUNCATING TABLE: SILVER.CRM_CUST_INFO';
+		TRUNCATE TABLE SILVER.CRM_CUST_INFO;
+		PRINT'>> INSERTING DATA INTO: SILVER.CRM_CUST_INFO';
+		INSERT INTO silver.crm_cust_info
+		(
+			CST_ID,
+			CST_KEY,
+			cst_firstname,
+			cst_lastname,
+			cst_marital_status,
+			cst_gndr,
+			cst_create_date
+		)
+
+		SELECT 
+			CST_ID, 
+			CST_KEY,
+			UPPER(LEFT(TRIM(CST_FIRSTNAME),1)) + LOWER(SUBSTRING(TRIM(CST_FIRSTNAME), 2, LEN(CST_FIRSTNAME))) AS CST_FRISTNAME,
+			UPPER(LEFT(TRIM(CST_LASTNAME), 1)) + LOWER(SUBSTRING(TRIM(CST_LASTNAME), 2, LEN(CST_LASTNAME))) AS CST_LASTNAME,
+			CASE 
+				WHEN UPPER(CST_MARITAL_STATUS) = 'M' THEN 'Married'
+				WHEN UPPER(CST_MARITAL_STATUS) = 'S' THEN 'Single'
+				ELSE 'N/A'
+			END AS CST_MARITAL_STATUS,
+			CASE 
+				WHEN UPPER(CST_GNDR) = 'M' THEN 'Male'
+				WHEN UPPER(CST_GNDR) = 'F' THEN 'Female'
+				ELSE 'N/A'
+			END AS CST_GNDR,
+			CST_CREATE_DATE
+		FROM (
+		SELECT *,
+		ROW_NUMBER() OVER(PARTITION BY CST_ID ORDER BY CST_CREATE_DATE DESC) AS FLAG 
+		FROM bronze.crm_cust_info
+		WHERE CST_ID IS NOT NULL 
+		) t
+		where flag = 1;
+		SET @END_TIME = GETDATE();
+		PRINT 'LOAD DURATION:'+ CAST(DATEDIFF(SECOND, @START_TIME, @END_TIME) AS NVARCHAR) + 'SECONDS';
+
+		SET @START_TIME = GETDATE();
+		PRINT'>> TRUNCATING TABLE: SILVER.CRM_PRD_INFO';
+		TRUNCATE TABLE SILVER.CRM_PRD_INFO;
+		PRINT'>> INSERTING DATA INTO: SILVER.CRM_PRD_INFO';
+		INSERT INTO silver.crm_prd_info(
+			PRD_ID,
+			PRD_CAT,
+			PRD_KEY,
+			PRD_NM,
+			PRD_COST,
+			PRD_LINE,
+			PRD_START_DT,
+			PRD_END_DT
+		)
+		SELECT 
+			PRD_ID,
+			REPLACE(SUBSTRING(TRIM(PRD_KEY), 1, 5), '-', '_') AS PRD_CAT,
+			SUBSTRING(PRD_KEY, 7, LEN(TRIM(PRD_KEY))) AS PRD_KEY,
+			TRIM(PRD_NM) AS PRD_NM,
+			CASE
+				WHEN PRD_COST < 0 OR PRD_COST IS NULL THEN 0
+				ELSE PRD_COST
+			END AS PRD_COST,
+			CASE UPPER(TRIM(PRD_LINE))
+				WHEN 'M' THEN 'Mountain'
+				WHEN 'R' THEN 'Road'
+				WHEN 'S' THEN 'Other sales'
+				WHEN 'T' THEN 'Touring'
+				ELSE 'N/A'
+			END AS PRD_LINE,
+			CAST(PRD_START_DT AS DATE) PRD_START_DT,
+			CAST(LEAD(PRD_START_DT) OVER(PARTITION BY PRD_KEY ORDER BY PRD_START_DT ASC) AS DATE) AS PRD_END_DT
+		FROM BRONZE.CRM_PRD_INFO;
+		SET @END_TIME = GETDATE();
+		PRINT 'LOAD DURATION:'+ CAST(DATEDIFF(SECOND, @START_TIME, @END_TIME) AS NVARCHAR) + 'SECONDS';
+
+
+		SET @START_TIME = GETDATE();
+		PRINT'>> TRUNCATING TABLE: SILVER.CRM_SALES_DETAILS';
+		TRUNCATE TABLE SILVER.CRM_SALES_DETAILS;
+		PRINT'>> INSERTING DATA INTO: SILVER.CRM_SALES_DETAILS';
+		INSERT INTO silver.crm_sales_details(
+			   [sls_ord_num]
+			  ,[sls_prd_key]
+			  ,[sls_cust_id]
+			  ,[sls_order_dt]
+			  ,[sls_ship_dt]
+			  ,[sls_due_dt]
+			  ,[sls_sales]
+			  ,[sls_quantity]
+			  ,[sls_price]
+	  )
+		SELECT 
+			sls_ord_num, 
+			TRIM(sls_prd_key) sls_prd_key, 
+			sls_cust_id, 
+			CASE 
+				WHEN sls_order_dt <= 0 OR LEN(sls_order_dt) != 8 THEN NULL
+				ELSE CAST(CAST(sls_order_dt AS VARCHAR) AS DATE)
+			END AS sls_order_dt,
+			CASE
+				WHEN sls_ship_dt <= 0 OR LEN(sls_ship_dt) != 8 THEN NULL
+				ELSE CAST(CAST( sls_ship_dt AS VARCHAR) AS DATE)
+			END AS sls_ship_date, 
+			CASE
+				WHEN sls_due_dt <= 0 OR LEN(sls_due_dt) != 8 THEN NULL
+				ELSE CAST(CAST( sls_due_dt AS VARCHAR) AS DATE)
+			END AS sls_due_date, 
+			CASE 
+				WHEN sls_sales <= 0 OR sls_sales != SLS_QUANTITY * ABS(SLS_PRICE) OR SLS_SALES IS NULL
+				THEN SLS_QUANTITY * ABS(SLS_PRICE)
+				ELSE sls_sales
+			END AS sls_sales, 
+			sls_quantity, 
+			CASE 
+				WHEN sls_price <= 0 OR sls_price IS NULL THEN sls_sales / NULLIF(sls_quantity, 0)
+				ELSE sls_price
+			END AS sls_price
+		FROM bronze.crm_sales_details;
+
+		SET @END_TIME = GETDATE();
+		PRINT 'LOAD DURATION:'+ CAST(DATEDIFF(SECOND, @START_TIME, @END_TIME) AS NVARCHAR) + 'SECONDS';
+
+		PRINT'----------------------------------';
+		PRINT'LOADING ERP FILES';
+		PRINT'----------------------------------';
+		SET @START_TIME = GETDATE();
+		PRINT'>> TRUNCATING TABLE: SILVER.ERP_CUST_AZ12';
+		TRUNCATE TABLE SILVER.ERP_CUST_AZ12;
+		PRINT'>> INSERTING DATA INTO: SILVER.ERP_CUST_AZ12';
+		INSERT INTO SILVER.ERP_CUST_AZ12(
+			  [CID]
+			 ,[BDATE]
+			 ,[GEN] )
+
+		SELECT
+			CASE 
+				WHEN CID LIKE 'NAS%' THEN SUBSTRING(CID, 4, LEN(TRIM(CID)))
+				ELSE CID
+			END AS CID,
+			CASE	
+				WHEN BDATE > GETDATE() THEN NULL
+				ELSE BDATE
+			END AS BDATE,
+			CASE  
+				WHEN UPPER(TRIM(GEN)) IN ('M', 'MALE') THEN 'Male'
+				WHEN UPPER(TRIM(GEN)) IN ('F', 'FEMALE')  THEN 'Female'
+				ELSE 'N/A'
+			END AS GEN
+		FROM BRONZE.erp_cust_az12;
+		SET @END_TIME = GETDATE();
+		PRINT 'LOAD DURATION:'+ CAST(DATEDIFF(SECOND, @START_TIME, @END_TIME) AS NVARCHAR) + 'SECONDS';
+
+		SET @START_TIME = GETDATE();
+		PRINT'>> TRUNCATING TABLE: SILVER.ERP_LOC_A101';
+		TRUNCATE TABLE SILVER.ERP_LOC_A101;
+		PRINT'>> INSERTING DATA INTO: SILVER.ERP_LOC_A101';
+		INSERT INTO SILVER.ERP_LOC_A101(
+			CID,
+			CNTRY
+			)
+		
+		SELECT 
+			REPLACE(TRIM(CID), '-', '') AS CID,
+			CASE
+				WHEN UPPER(TRIM(CNTRY)) IN ('DE', 'GERMANY') THEN 'Germany'
+				WHEN UPPER(TRIM(CNTRY)) IN ('US', 'USA', 'UNITED STATES') THEN 'United States'
+				WHEN CNTRY IS NULL OR CNTRY = '' THEN 'N/A'
+				ELSE CNTRY
+			END AS CNTRY
+		FROM bronze.erp_loc_a101;
+		SET @END_TIME = GETDATE();
+		PRINT 'LOAD DURATION:'+ CAST(DATEDIFF(SECOND, @START_TIME, @END_TIME) AS NVARCHAR) + 'SECONDS';
+
+		SET @START_TIME = GETDATE();
+		PRINT'>> TRUNCATING TABLE: SILVER.ERP_PX_CAT_G1V2';
+		TRUNCATE TABLE SILVER.ERP_PX_CAT_G1V2;
+		PRINT'>> INSERTING DATA INTO: SILVER.ERP_PX_CAT_G1V2';
+		INSERT INTO SILVER.ERP_PX_CAT_G1V2(
+			ID,
+			CAT,
+			SUBCAT,
+			MAINTENANCE
+		)
+		SELECT 
+			TRIM(ID) AS ID,
+			TRIM(CAT) AS CAT,
+			TRIM(SUBCAT) AS SUBCAT,
+			TRIM(MAINTENANCE) AS MAINTENANCE
+		FROM bronze.erp_px_cat_g1v2;
+
+		SET @END_TIME = GETDATE();
+		PRINT 'LOAD DURATION:'+ CAST(DATEDIFF(SECOND, @START_TIME, @END_TIME) AS NVARCHAR) + 'SECONDS';
+
+		SET @BATCH_END_TIME = GETDATE();
+		PRINT '=======================================';
+		PRINT 'EXECUTION OF SILVER LAYER COMPLETED';
+		PRINT '  - TOTAL_LOAD_DURATION: ' + CAST(DATEDIFF(SECOND, @BATCH_START_TIME, @BATCH_END_TIME) as NVARCHAR) + 'SECONDS';
+		PRINT '=======================================';
+		END TRY
+		BEGIN CATCH
+			PRINT '=======================================';
+			PRINT 'ERROR OCCURED DURING EXECUTIG BRONZE LAYER';
+			PRINT 'ERROR MESSAGE' + ERROR_MESSAGE();
+			PRINT 'ERROR MESSAGE' + CAST(ERROR_NUMBER() AS NVARCHAR);
+			PRINT 'ERROR MESSAGE' + CAST(ERROR_STATE() AS NVARCHAR);
+			PRINT '=======================================';
+	    END CATCH
+END
+
+
