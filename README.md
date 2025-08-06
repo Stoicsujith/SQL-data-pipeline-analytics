@@ -97,7 +97,7 @@ This project demonstrates the end-to-end development of a data warehouse using t
 - Raw, inconsistent source data was transformed into a clean, enriched dataset using SQL-only data pipeline.
 - Final Gold Layer provides a reliable reporting layer following modern data warehousing best practices.
 - Designed for scalability and extensibility to add more dimensions/facts.
-- 
+  
 ---
 
 ## 🧠 Future Improvements
