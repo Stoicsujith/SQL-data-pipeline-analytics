@@ -35,7 +35,7 @@ This project demonstrates the end-to-end development of a data warehouse using t
 
 ## 🔄 Layer Breakdown
 
-### 🔹 Bronze Layer
+### 🟤 Bronze Layer
 
 - **Purpose**: Raw ingestion from CSV files into staging tables  
 - **Implementation**:  
@@ -45,7 +45,7 @@ This project demonstrates the end-to-end development of a data warehouse using t
   - Handles errors using `TRY...CATCH` blocks  
 - **Procedure**: `bronze.load_bronze`
 
-### 🔸 Silver Layer
+### ⚪ Silver Layer
 
 - **Purpose**: Data cleaning and transformation  
 - **Key Tasks**:
