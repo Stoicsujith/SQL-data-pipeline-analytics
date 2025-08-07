@@ -1,4 +1,4 @@
-# SQL Data Warehouse Project – Medallion Architecture
+# SQL Data Warehouse Project – Medallion Architecture AND EDA
 
 ## 📌 Project Objective
 
