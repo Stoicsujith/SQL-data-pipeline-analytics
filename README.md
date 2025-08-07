@@ -67,6 +67,24 @@ This project demonstrates the end-to-end development of a data warehouse using t
 - **Use**: Designed for direct querying by reporting and analytics layers
 
 ---
+### 🔍 Exploratory Data Analysis (EDA)
+
+As part of the Gold Layer, two exploratory analyses were conducted using pure SQL to extract key business insights.
+
+#### 📌 Customer Analysis
+- Counted customers by gender and marital status combinations  
+- Identified top countries by customer count  
+- Analyzed birth year distribution to understand customer age groups  
+- Verified completeness of customer attributes (null checks, ‘N/A’ values)
+
+#### 📌 Product Analysis
+- Counted products by category and sub-category  
+- Identified product types with the highest number of sales  
+- Analyzed price distribution to spot potential outliers or misclassified products  
+- Merged CRM and ERP product records to validate product catalog consistency
+
+---
+
 
 ## 📊 Visual Diagrams
 
