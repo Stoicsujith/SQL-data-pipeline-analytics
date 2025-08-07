@@ -1,6 +1,3 @@
-USE datawarehouse;
-GO
-
 /*
 =================================================================================
  CUSTOMER REPORT
@@ -23,6 +20,9 @@ Highlights:
 		- average monthly spend
 =================================================================================
 */
+USE datawarehouse;
+GO
+	
 IF OBJECT_ID ('gold.report_customer', 'V') IS NOT NULL
 	DROP VIEW gold.report_customer;
 GO
