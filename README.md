@@ -115,15 +115,6 @@ As part of the Gold Layer, two exploratory analyses were conducted using pure SQ
 - Raw, inconsistent source data was transformed into a clean, enriched dataset using SQL-only data pipeline.
 - Final Gold Layer provides a reliable reporting layer following modern data warehousing best practices.
 - Designed for scalability and extensibility to add more dimensions/facts.
-  
----
-
-## 🧠 Future Improvements
-
-- Add automation via SQL Agent or Airflow
-- Integrate with BI tools like Power BI or Tableau
-- Introduce incremental data loading and partitioning
-- Add data quality validation layer
 
 ---
 
