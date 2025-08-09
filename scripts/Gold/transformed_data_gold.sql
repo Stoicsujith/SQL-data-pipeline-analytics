@@ -1,6 +1,6 @@
 /*
 ===============================================================================
-Gold Layer Views - DDL Script
+Gold Layer Views
 ===============================================================================
 Purpose:
     Defines final dimension and fact views (Star Schema) in the Gold layer.
